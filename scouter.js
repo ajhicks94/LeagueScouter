@@ -4,7 +4,7 @@ Logger.log('Begin.');
 var summoners;
 var startTime = new Date().getTime();
 
-var apiKey = 'RGAPI-01d29fc7-a774-49d8-bcdc-fe94652483da'; //Might want to pull this from the spreadsheet at some point
+var apiKey = 'YOUR_API_KEY_HERE'; //Might want to pull this from the spreadsheet at some point
 
 var s = SpreadsheetApp.getActiveSpreadsheet();
 
