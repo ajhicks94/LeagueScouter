@@ -4,15 +4,15 @@ Logger.log('Begin.');
 var summoners;
 var startTime = new Date().getTime();
 
-var apiKey = 'YOUR_API_KEY_HERE'; //Might want to pull this from the spreadsheet at some point
+var apiKey = 'YOUR_KEY_HERE'; //Might want to pull this from the spreadsheet at some point
 
 var s = SpreadsheetApp.getActiveSpreadsheet();
 
 var scouterExists = setUp();
 
 var sheet = s.getSheetByName('Scouter');
-var sheetName = sheet.getRange('H12').getValue();
-var dataSheet = s.getSheetByName('newData');
+var sheetName = sheet.getRange('I7').getValue();
+var dataSheet = s.getSheetByName('data');
 
 var champions = {
   1: 'Annie', 2: 'Olaf', 3: 'Galio', 4: 'Twisted Fate', 5: 'Xin Zhao', 6: 'Urgot', 7: 'LeBlanc', 8: 'Vladimir', 9: 'Fiddlesticks', 10: 'Kayle',
@@ -34,29 +34,34 @@ var champions = {
 var headerRange = 'J2:N2';
 var headerRangeMerged = 'J2:N3';
 var kdaRange = 'N3:N32';
+var kdaSubRange = 'T3:T14';
 var dataRange = 'L4:N32';
+var dataSubRange = 'R4:T14';
 var topRange = 'J4:N8';
 var jungleRange = 'J10:N14';
 var midRange = 'J16:N20';
 var adcRange = 'J22:N26';
 var supportRange = 'J28:N32';
+var subOneRange = 'P4:T8';
+var subTwoRange = 'P10:T14';
 
 var summonerColumn = 'J4:J32';
+var summonerSubColumn = 'P4:P14';
 var championColumn = 'K4:K32';
+var championSubColumn = 'Q4:Q14';
 
 function main() {
   //Logger.log('Function executing: main()');
   var time;
   
   deleteTriggers();
-  ScriptApp.newTrigger('main').timeBased().everyMinutes(5).create();
+  //ScriptApp.newTrigger('main').timeBased().everyMinutes(5).create();
   
   //Logger.log('Function executing: setUp()');
   if(scouterExists == false) return;
   //Logger.log('Function completed: setUp()');
   time = run('top');
   if(time != 0) return;
-  
   time = run('jungle');
   if(time != 0) return;
   time = run('mid');
@@ -65,6 +70,10 @@ function main() {
   if(time != 0) return;
   time = run('support');
   if(time != 0) return
+  time = run('subOne');
+  if(time != 0) return;
+  time = run('subTwo');
+  if(time != 0) return;
   
   //Logger.log('Function executing: formatOutput()');
   formatOutput();
@@ -83,26 +92,40 @@ function run(role) {
   var accountRange = getAccountRange();
   
   if(role == 'top') {
+    if(!summoners[0][0]) return 0;
     completeCell = 'I4';
     summoner = summoners[0][0];
   }
   else if(role == 'jungle') {
+    if(!summoners[1][0]) return 0;
     completeCell = 'I10';
     summoner = summoners[1][0];
   }
   else if(role == 'mid') {
+    if(!summoners[2][0]) return 0;
     completeCell = 'I16';
     summoner = summoners[2][0];
   }
   else if(role == 'adc') {
+    if(!summoners[3][0]) return 0;
     completeCell = 'I22';
     summoner = summoners[3][0];
   }
   else if(role == 'support') {
+    if(!summoners[4][0]) return 0;
     completeCell = 'I28';
     summoner = summoners[4][0]; 
   }
-  
+  else if(role == 'subOne') {
+    if(!summoners[5][0]) return 0;
+    completeCell = 'O4';
+    summoner = summoners[5][0];
+  }
+  else if(role == 'subTwo') {
+    if(!summoners[6][0]) return 0;
+    completeCell = 'O10';
+    summoner = summoners[6][0];
+  }
   //Logger.log('Function executing: getAccountId');
   accountId = getAccountId(summoner); // worst + best: 1 fetch
   //Logger.log('Function completed: getAccountId');
@@ -121,7 +144,8 @@ function run(role) {
   //Logger.log('Function completed: getMatchIds()');
   //Logger.log('Function executing: analyzeMatches()');
   if(analyzeMatches(matchIds, accountId, profile, accountInfo) == 'Time\'s Up') {
-    sheet.getRange(completeCell).setValue(((accountInfo['totalGames'] / matchIds.length) * 100) + '%...');
+    sheet = s.getSheetByName(sheetName);
+    sheet.getRange(completeCell).setValue((Math.round(roundAtTwoPlaces((accountInfo['totalGames'] / matchIds.length) * 100))) + '% analyzed...');
     return 1;
   }// worst: number of matches in matchlist, best: 0
   //Logger.log('Function completed: analyzeMatches()');
@@ -153,8 +177,14 @@ function formatOutput() {
   cell.mergeVertically();
   cell.setVerticalAlignment('middle');
   
-  // Summoner column
+  // Summoner Column
   cell = sheet.getRange(summonerColumn);
+  cell.setHorizontalAlignment('center');
+  cell.setBorder(true, true, true, true, false, false);
+  cell.setBackground('#f3f3f3');
+  
+  // Sub Summoner Column
+  cell = sheet.getRange(summonerSubColumn);
   cell.setHorizontalAlignment('center');
   cell.setBorder(true, true, true, true, false, false);
   cell.setBackground('#f3f3f3');
@@ -170,9 +200,19 @@ function formatOutput() {
   cell.setBorder(true,true,true,true,true,true);
   cell = sheet.getRange('J28');
   cell.setBorder(true,true,true,true,true,true);
+  cell = sheet.getRange('P4');
+  cell.setBorder(true,true,true,true,true,true);
+  cell = sheet.getRange('P10');
+  cell.setBorder(true,true,true,true,true,true);  
   
   // Champion column
   cell = sheet.getRange(championColumn);
+  cell.setHorizontalAlignment('left');
+  cell.setBackground('#f3f3f3');
+  cell.setBorder(true,true,true,true,true,true);
+  
+  // Champion Sub Column
+  cell = sheet.getRange(championSubColumn);
   cell.setHorizontalAlignment('left');
   cell.setBackground('#f3f3f3');
   cell.setBorder(true,true,true,true,true,true);
@@ -183,8 +223,15 @@ function formatOutput() {
   cell.setBackground('#f3f3f3');
   cell.setBorder(true,true,true,true,true,true);
   
+  // Sub Data
+  cell = sheet.getRange(dataSubRange);
+  cell.setHorizontalAlignment('right');
+  cell.setBackground('#f3f3f3');
+  cell.setBorder(true,true,true,true,true,true);
+  
   // KDA column
   cell = sheet.getRange(kdaRange).setNumberFormat('0.00');
+  cell = sheet.getRange(kdaSubRange).setNumberFormat('0.00');
   
   // Gap Rows
   cell = sheet.getRange('J9:N9');
@@ -198,14 +245,26 @@ function formatOutput() {
   cell.setBorder(true,false,true,false,false,false);
   cell = sheet.getRange('J27:N27');
   cell.setBackground(null);
+  cell.setBorder(true,false,true,false,false,false);  
+  
+  cell = sheet.getRange('P9:T9');
+  cell.setBackground(null);
   cell.setBorder(true,false,true,false,false,false);
+
+  cell = sheet.getRange('I4:I28');
+  cell.clearContent();
   
   sheet.autoResizeColumn(10);
   sheet.autoResizeColumn(11);
+  sheet.autoResizeColumn(16);
+  sheet.autoResizeColumn(17);
+  
   sheet.setColumnWidth(12,55);
   sheet.setColumnWidth(13,55);
   sheet.setColumnWidth(14,50);
-  
+  sheet.setColumnWidth(18,55);
+  sheet.setColumnWidth(19,55);
+  sheet.setColumnWidth(20,50);
 }
 
 function setUp() {
@@ -214,9 +273,9 @@ function setUp() {
     
     sheet = s.getSheetByName('Scouter');
     
-    newSheetName = sheet.getRange('H12').getValue();
+    newSheetName = sheet.getRange('I7').getValue();
     
-    summoners = sheet.getRange('H13:H17').getValues();
+    summoners = sheet.getRange('I8:I14').getValues();
     
     if(s.getSheetByName(newSheetName)) return;
     
@@ -227,35 +286,43 @@ function setUp() {
   else {
     var sheet, cell;
     s.insertSheet('Scouter',0);
+    s.insertSheet('data');
+    
     sheet = s.getSheetByName('Scouter');
-    cell = sheet.getRange('H7');
+    
+    cell = sheet.getRange('I3');
     cell.setValue('League Scouter');
-    cell.setFontSize(12);
+    cell.setFontSize(14);
     cell.setFontWeight('bold');
     cell.setHorizontalAlignment('center');
+    cell.setBackground('#c9daf8');
     
-    cell = sheet.getRange('H11');
-    cell.setValue('Input the following');
-    cell.setFontSize(11);
-    cell.setFontWeight('bold');
-    cell.setHorizontalAlignment('center');
-    cell.setBorder(true,true,true,true, true, true);
+    cell = sheet.getRange('H3:J3');
+    cell.mergeAcross();
+    cell.setBorder(true,true,true,true,true,true);
     
-    cell = sheet.getRange('H19');
-    cell.setValue('Run the script');
-    cell.setFontSize(11);
-    cell.setFontWeight('bold');
-    cell.setHorizontalAlignment('center');
-    
-    cell = sheet.getRange('G12:G17');
+    cell = sheet.getRange('H7:H12');
     cell.setValues([['Sheet Name'],['Top'],['Jungle'],['Mid'],['ADC'],['Support']]);
-    cell.setHorizontalAlignment('right');
-    
-    cell = sheet.getRange('H12:H17');
     cell.setHorizontalAlignment('center');
-    cell.setBorder(true,true,true,true, true, true);
+    cell.setFontSize(11);
+    cell.setBorder(true,true,true,true,true,true);
+    cell.setBackgrounds([['#d9d2e9'],['#f4cccc'],['#c9daf8'],['#d9ead3'],['#fff2cc'],['#fce5cd']]);
+    
+    cell = sheet.getRange('I7:J12');
+    cell.setHorizontalAlignment('center');
+    cell.setBorder(true,true,true,true,true,true);
+    cell.mergeAcross();
     
     sheet.autoResizeColumn(8);
+    
+    cell = sheet.getRange('I5');
+    cell.setValue('Run the script after filling out the information below.');
+    cell.setFontSize(11);
+    cell.setFontWeight('bold');
+    cell.setHorizontalAlignment('center');
+    
+    cell = sheet.getRange('H3:J12');
+    cell.setFontFamily('Roboto');
     
     return false;
   }
@@ -279,17 +346,115 @@ function printStatsToSheet(accountId, topChamps, role, profile, accountInfo) {
   else if(role == 'mid') range = midRange;
   else if(role == 'adc') range = adcRange;
   else if(role == 'support') range = supportRange;
+  else if(role == 'subOne') range = subOneRange;
+  else if(role == 'subTwo') range = subTwoRange;
   
   saveAccountInfo(accountId, accountInfo);
   
   sheet = s.getSheetByName(sheetName);
   
   sheet.getRange(range).setValues([[rankString, championName[0], accountInfo[topChamps[0]]['totalGames'], accountInfo[topChamps[0]]['wr'] + '%', accountInfo[topChamps[0]]['kda']],
-                                   ['', championName[1], accountInfo[topChamps[1]]['totalGames'], accountInfo[topChamps[1]]['wr'] + '%', accountInfo[topChamps[1]]['kda']],
+                                   [Math.round((roundAtTwoPlaces(accountInfo['totalWins'] / accountInfo['totalGames'] * 100))) + '% WR - ' + accountInfo['totalGames'] + ' games', championName[1], accountInfo[topChamps[1]]['totalGames'], accountInfo[topChamps[1]]['wr'] + '%', accountInfo[topChamps[1]]['kda']],
                                    ['', championName[2], accountInfo[topChamps[2]]['totalGames'], accountInfo[topChamps[2]]['wr'] + '%', accountInfo[topChamps[2]]['kda']],
                                    ['', championName[3], accountInfo[topChamps[3]]['totalGames'], accountInfo[topChamps[3]]['wr'] + '%', accountInfo[topChamps[3]]['kda']],
                                    ['', championName[4], accountInfo[topChamps[4]]['totalGames'], accountInfo[topChamps[4]]['wr'] + '%', accountInfo[topChamps[4]]['kda']]
                                   ]);
+}
+
+function analyzeMatches(matchIds, accountId, profile, accountInfo) {
+  var i = 0;
+  var endIndex = matchIds.length;
+  var cleanSlate = false;
+  
+  //If we don't have any stats on the account yet, CLEAN SLATE
+  if(!accountExists(accountId)){
+    Logger.log('Clean slate');
+    initializeVars(1, accountInfo);
+    accountInfo['newestAnalyzedMatch'] = accountInfo['oldestAnalyzedMatch'] = accountInfo['lastAnalyzedMatch'] = matchIds[0];
+    accountInfo['terminateMatch'] = matchIds[matchIds.length - 1];
+    cleanSlate = true;
+  }
+  //New matches to analyze
+  else if(matchIds[0] > accountInfo['newestAnalyzedMatch']){
+    Logger.log('Found new matches to analyze.');
+    accountInfo['newestAnalyzedMatch'] = accountInfo['lastAnalyzedMatch'] = matchIds[0];
+  }
+  //If there's a gap in our matches (likely caused by timeout/interrupt)
+  else if(accountInfo['lastAnalyzedMatch'] > accountInfo['terminateMatch']){
+    Logger.log('Found a gap in our match data. l= ' + accountInfo['lastAnalyzedMatch'] + ' t= ' + accountInfo['terminateMatch']);
+    for(var j = 0; j < endIndex; j++) {
+      if(matchIds[j] == accountInfo['lastAnalyzedMatch']) i = j + 1;
+    }
+  }
+  else if(accountInfo['newestAnalyzedMatch'] == matchIds[0]){
+    Logger.log('No new matches to analyze.');
+  }
+  
+  for(i; i < endIndex; i++) {
+    if(matchIds[i] == accountInfo['terminateMatch'] && cleanSlate == false){
+      accountInfo['terminateMatch'] = accountInfo['newestAnalyzedMatch'];
+      return;
+    }
+    
+    var matchStats = getMatchStats(matchIds[i], accountId);
+    var championId = matchStats['championId'];
+    
+    initializeVars(championId, accountInfo);
+    
+    if(matchStats['outcome'] == true) {
+      accountInfo['totalWins'] += 1;
+      accountInfo[championId]['wins'] += 1;
+    }
+    else if(matchStats['outcome'] == false) {
+      accountInfo['totalLosses'] += 1;
+      accountInfo[championId]['losses'] += 1;
+    }
+    
+    accountInfo[championId]['totalGames'] += 1;
+    accountInfo['totalGames'] += 1;
+    
+    accountInfo[championId]['kills'] += matchStats['kills'];
+    accountInfo[championId]['deaths'] += matchStats['deaths'];
+    accountInfo[championId]['assists'] += matchStats['assists'];
+    accountInfo[championId]['championId'] = championId;
+    
+    Logger.log('Match analyzed: ' + matchIds[i]);
+    
+    if(accountInfo['oldestAnalyzedMatch'] > matchIds[i]) accountInfo['oldestAnalyzedMatch'] = matchIds[i];
+    
+    accountInfo['lastAnalyzedMatch'] = matchIds[i];
+    
+    if((new Date().getTime() - startTime) >= 250000){
+      saveAccountInfo(accountId, accountInfo);
+      formatOutput();
+      Logger.log('Execution time approaching limits, saving progress and terminating...');
+      return 'Time\'s Up';
+    }
+  }
+  accountInfo['terminateMatch'] = accountInfo['newestAnalyzedMatch'];
+  Logger.log('Total games analyzed for account ' + accountId + ' : ' + accountInfo['totalGames']);
+}
+
+function getMatchStats(matchId, accountId) {
+  var data;
+  var matchStats = {};
+  
+  url = 'https://na1.api.riotgames.com/lol/match/v3/matches/' + matchId + '?forAccountId=' + accountId + '&api_key=' + apiKey;
+  data = getDataFromUrl(url);
+  
+  for(var i = 0; i < data['participantIdentities'].length; i++) {
+    if(data['participantIdentities'][i]['player']['accountId'] == accountId) {
+      var partId = data['participantIdentities'][i]['participantId'];
+      
+      matchStats['kills'] = data['participants'][partId - 1]['stats']['kills'];
+      matchStats['deaths'] = data['participants'][partId - 1]['stats']['deaths'];
+      matchStats['assists'] = data['participants'][partId - 1]['stats']['assists'];
+      matchStats['championId'] = data['participants'][partId - 1]['championId'];
+      matchStats['outcome'] = data['participants'][partId - 1]['stats']['win'];
+      
+      return matchStats;
+    }
+  }
 }
 
 function getTop5Champs(topChamps, accountInfo) {
@@ -324,95 +489,6 @@ function getTop5Champs(topChamps, accountInfo) {
   }
 }
 
-function analyzeMatches(matchIds, accountId, profile, accountInfo) {
-  var i = 0;
-  var endIndex = matchIds.length;
-  var cleanSlate = false;
-  
-  //If we don't have any stats on the account yet, CLEAN SLATE
-  if(!accountExists(accountId)){
-    initializeVars(1, accountInfo);
-    accountInfo['newestAnalyzedMatch'] = accountInfo['oldestAnalyzedMatch'] = accountInfo['lastAnalyzedMatch'] = matchIds[0];
-    accountInfo['terminateMatch'] = matchIds[matchIds.length - 1];
-    cleanSlate = true;
-  }
-  //New matches to analyze
-  else if(matchIds[0] > accountInfo['newestAnalyzedMatch']){
-    Logger.log('Found new matches to analyze.');
-    accountInfo['newestAnalyzedMatch'] = accountInfo['lastAnalyzedMatch'] = matchIds[0];
-  }
-  //If there's a gap in our matches (likely caused by timeout/interrupt)
-  else if(accountInfo['lastAnalyzedMatch'] > accountInfo['terminateMatch']){
-    Logger.log('Found a gap in our match data. l= ' + accountInfo['lastAnalyzedMatch'] + ' t= ' + accountInfo['terminateMatch']);
-    for(var j = 0; j < endIndex; j++) {
-      if(matchIds[j] == accountInfo['lastAnalyzedMatch']) i = j + 1;
-    }
-  }
-  else if(accountInfo['newestAnalyzedMatch'] == matchIds[0]){
-    Logger.log('No new matches to analyze.');
-  }
-  
-  for(i; i < endIndex; i++) {
-    if(matchIds[i] == accountInfo['terminateMatch'] && cleanSlate == false){
-      accountInfo['terminateMatch'] = accountInfo['newestAnalyzedMatch'];
-      return;
-    }
-    
-    var matchStats = getMatchStats(matchIds[i], accountId);
-    var championId = matchStats['championId'];
-    
-    initializeVars(championId, accountInfo);
-    
-    if(matchStats['outcome'] == true) accountInfo[championId]['wins'] += 1;
-    else if(matchStats['outcome'] == false) accountInfo[championId]['losses'] += 1;
-    
-    accountInfo[championId]['totalGames'] += 1;
-    accountInfo['totalGames'] += 1;
-    
-    accountInfo[championId]['kills'] += matchStats['kills'];
-    accountInfo[championId]['deaths'] += matchStats['deaths'];
-    accountInfo[championId]['assists'] += matchStats['assists'];
-    accountInfo[championId]['championId'] = championId;
-    
-    Logger.log('Match analyzed: ' + matchIds[i]);
-    
-    if(accountInfo['oldestAnalyzedMatch'] > matchIds[i]) accountInfo['oldestAnalyzedMatch'] = matchIds[i];
-    
-    accountInfo['lastAnalyzedMatch'] = matchIds[i];
-    
-    if((new Date().getTime() - startTime) >= 270000){
-      saveAccountInfo(accountId, accountInfo);
-      formatOutput();
-      Logger.log('Execution time approaching limits, saving progress and terminating...');
-      return 'Time\'s Up';
-    }
-  }
-  accountInfo['terminateMatch'] = accountInfo['newestAnalyzedMatch'];
-  Logger.log('Total games analyzed for account ' + accountId + ' : ' + accountInfo['totalGames']);
-}
-
-function getMatchStats(matchId, accountId) {
-  var data;
-  var matchStats = {};
-  
-  url = 'https://na1.api.riotgames.com/lol/match/v3/matches/' + matchId + '?forAccountId=' + accountId + '&api_key=' + apiKey;
-  data = getDataFromUrl(url);
-  
-  for(var i = 0; i < data['participantIdentities'].length; i++) {
-    if(data['participantIdentities'][i]['player']['accountId'] == accountId) {
-      var partId = data['participantIdentities'][i]['participantId'];
-      
-      matchStats['kills'] = data['participants'][partId - 1]['stats']['kills'];
-      matchStats['deaths'] = data['participants'][partId - 1]['stats']['deaths'];
-      matchStats['assists'] = data['participants'][partId - 1]['stats']['assists'];
-      matchStats['championId'] = data['participants'][partId - 1]['championId'];
-      matchStats['outcome'] = data['participants'][partId - 1]['stats']['win'];
-      
-      return matchStats;
-    }
-  }
-}
-
 function getMatchIds(accountId) {
   var data;
   var matchIds = [];
@@ -428,6 +504,7 @@ function getMatchIds(accountId) {
 
 function getRank(summonerName, accountInfo){
   var data, summonerId;
+  var j = 0;
   var profile = {};
   
   if(accountInfo['summonerId']) summonerId = accountInfo['summonerId'];
@@ -441,13 +518,24 @@ function getRank(summonerName, accountInfo){
   url = 'https://na1.api.riotgames.com/lol/league/v3/leagues/by-summoner/' + summonerId + '?api_key=' + apiKey;
   data = getDataFromUrl(url);
   
-  profile['tier'] = data[0]['tier'];
-  profile['name'] = summonerName;
+  if(data.length > 1){
+    for(j = 0; j < data.length; j++){
+      if(data[j]['queue'] == 'RANKED_SOLO_5x5'){
+        profile['tier'] = data[j]['tier'];
+        profile['name'] = summonerName;
+        break;
+      }
+    }
+  }
+  else{
+    profile['tier'] = 'N/A'
+    profile['name'] = summonerName;
+  }
   
-  for(var i = 0; i < data[0]['entries'].length; i++){
-    if(data[0]['entries'][i]['playerOrTeamId'] == summonerId){
-      profile['division'] = romanToDecimal(data[0]['entries'][i]['rank']);
-      profile['lp'] = data[0]['entries'][i]['leaguePoints'];
+  for(var i = 0; i < data[j]['entries'].length; i++){
+    if(data[j]['entries'][i]['playerOrTeamId'] == summonerId){
+      profile['division'] = romanToDecimal(data[j]['entries'][i]['rank']);
+      profile['lp'] = data[j]['entries'][i]['leaguePoints'];
     }
   }
   Logger.log('Rank retrieved.');
@@ -465,6 +553,8 @@ function getAccountId(summonerName, accountInfo){
 
 function initializeVars(championId, accountInfo){
   if(typeof(accountInfo['totalGames']) === 'undefined') accountInfo['totalGames'] = 0;
+  if(typeof(accountInfo['totalWins']) === 'undefined') accountInfo['totalWins'] = 0;
+  if(typeof(accountInfo['totalLosses']) === 'undefined') accountInfo['totalLosses'] = 0;
   if(typeof(accountInfo['oldestAnalyzedMatch']) === 'undefined') accountInfo['oldestAnalyzedMatch'] = 0;
   if(typeof(accountInfo['newestAnalyzedMatch']) === 'undefined') accountInfo['newestAnalyzedMatch'] = 0;
   if(typeof(accountInfo['lastAnalyzedMatch']) === 'undefined') accountInfo['lastAnalyzedMatch'] = 0;
@@ -485,9 +575,9 @@ function initializeVars(championId, accountInfo){
 }
 
 function getDataFromUrl(url){
-  Logger.log('Begin fetching...');
+  //Logger.log('Begin fetching...');
   var response = UrlFetchApp.fetch(url, {muteHttpExceptions: true});
-  Logger.log('Fetching complete.');
+  //Logger.log('Fetching complete.');
   var statusCode = response.getResponseCode();
   
   if(statusCode == 200) {
@@ -515,18 +605,6 @@ function accountExists(accountId) {
   Logger.log('Account not found: ' + accountId);
   return false;
 }
-
-/*
-function accountExists(accountId) {
-  var accountRange = getAccountRange();
-  for(var i = 0; i < accountRange[0].length; i++) {
-    if(accountRange[0][i] == accountId) {
-      return true;
-    }
-  }
-  Logger.log('Account not found: ' + accountId);
-  return false;
-}*/
 
 function loadAccountInfo(accountId) {
   var accountRange = getAccountRange();
@@ -556,41 +634,12 @@ function saveAccountInfo(accountId, accountInfo) {
   }
 }
 
-/*
-function saveAccountInfo(accountId, accountInfo) {
-  var accountRange = getAccountRange();
-  
-  if(!accountExists(accountId)){
-    var lastColumn = dataSheet.getLastColumn();
-    
-    dataSheet.getRange(1,lastColumn + 1,1,2).setValues([[accountId, JSON.stringify(accountInfo)]]);
-    Logger.log('New account saved in sheet: ' + accountId);
-    return;
-  }
-  
-  for(var i = 0; i < accountRange[0].length; i++) {
-    if(accountRange[0][i] == accountId) {
-      dataSheet.getRange(1, i+2).setValue(JSON.stringify(accountInfo));
-      return;                                          
-    }
-  }
-}*/
-
 function getAccountRange() {
   var lastRow = dataSheet.getLastRow();
-  Logger.log('lastRow= ' + lastRow);
   if(lastRow == 0) lastRow += 1;
   
   return dataSheet.getRange(1,1,lastRow,2).getValues();
 }
-
-/*
-function getAccountRange() {
-  var lastColumn = dataSheet.getLastColumn();
-  if(lastColumn == 0) lastColumn += 1;
-  
-  return dataSheet.getRange(1,1,1,lastColumn).getValues();
-}*/
 
 function getChampionName(id) {
   return champions[id];
@@ -611,8 +660,7 @@ function getlastRow(column) {
   return lastRow;
 }
 
-function columnToLetter(column)
-{
+function columnToLetter(column) {
   var temp, letter = '';
   while (column > 0)
   {
