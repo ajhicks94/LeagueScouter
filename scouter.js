@@ -1,10 +1,12 @@
+// TODO: Properly print unranked summoners
+//       Pull API Key from sheet
 Logger.log('Begin.');
 
 // Global Variables
 var summoners;
 var startTime = new Date().getTime();
 
-var apiKey = 'YOUR_KEY_HERE'; //Might want to pull this from the spreadsheet at some point
+var apiKey = 'YOUR_KEY_HERE';
 
 var s = SpreadsheetApp.getActiveSpreadsheet();
 
@@ -32,7 +34,9 @@ var champions = {
 };
 
 var headerRange = 'J2:N2';
+var headerSubRange = 'P2:T2';
 var headerRangeMerged = 'J2:N3';
+var headerSubRangeMerged = 'P2:T3';
 var kdaRange = 'N3:N32';
 var kdaSubRange = 'T3:T14';
 var dataRange = 'L4:N32';
@@ -53,14 +57,22 @@ var championSubColumn = 'Q4:Q14';
 function main() {
   //Logger.log('Function executing: main()');
   var time;
-  
+  var roleArr = ['top','jungle','mid','adc','support','subOne','subTwo'];
+  var z = 0;
   deleteTriggers();
   //ScriptApp.newTrigger('main').timeBased().everyMinutes(5).create();
   
   //Logger.log('Function executing: setUp()');
   if(scouterExists == false) return;
   //Logger.log('Function completed: setUp()');
-  time = run('top');
+  
+  while(z < 7) {
+    time = run(roleArr[z]);
+    if(time != 0) return;
+    z += 1; 
+  }
+  
+  /*time = run('top');
   if(time != 0) return;
   time = run('jungle');
   if(time != 0) return;
@@ -74,7 +86,7 @@ function main() {
   if(time != 0) return;
   time = run('subTwo');
   if(time != 0) return;
-  
+  */
   //Logger.log('Function executing: formatOutput()');
   formatOutput();
   //Logger.log('Function completed: formatOutput()');
@@ -138,6 +150,7 @@ function run(role) {
   
   //Logger.log('Function executing: getRank()');
   profile = getRank(summoner, accountInfo); // worst: 2, best: 1 fetch
+  if(profile['tier'] == 'Unranked') return 0;
   //Logger.log('Function completed: getRank()');
   //Logger.log('Function executing: getMatchIds()');
   matchIds = getMatchIds(accountId); // worst + best: 1 fetch
@@ -165,6 +178,22 @@ function formatOutput() {
   newSheetName = sheetName;
   sheet = s.getSheetByName(newSheetName);
   
+  cell = sheet.getRange('J1:N1');
+  cell.mergeAcross();
+  cell.setValue('Active Roster');
+  cell.setFontSize(12);
+  cell.setFontWeight('bold');
+  cell.setBorder(true,true,true,true,true,true);
+  cell.setHorizontalAlignment('center');
+  
+  cell = sheet.getRange('P1:T1');
+  cell.mergeAcross();
+  cell.setValue('Substitutes');
+  cell.setFontSize(12);
+  cell.setFontWeight('bold');
+  cell.setBorder(true,true,true,true,true,true);
+  cell.setHorizontalAlignment('center');
+  
   // Headers
   cell = sheet.getRange(headerRange);
   cell.setBackgrounds([['#d9d2e9', '#f4cccc', '#c9daf8', '#d9ead3', '#fff2cc']]);
@@ -173,7 +202,20 @@ function formatOutput() {
   cell.setBorder(true,true,true,true,true,true);
   cell.setFontSize(11);
   
+  // Sub Headers
+  cell = sheet.getRange(headerSubRange);
+  cell.setBackgrounds([['#d9d2e9', '#f4cccc', '#c9daf8', '#d9ead3', '#fff2cc']]);
+  cell.setValues([['Summoner', 'Champion', 'Games', 'Win %', 'KDA']]);
+  cell.setHorizontalAlignment('center');
+  cell.setBorder(true,true,true,true,true,true);
+  cell.setFontSize(11);
+  
+  // Merged headeres
   cell = sheet.getRange(headerRangeMerged);
+  cell.mergeVertically();
+  cell.setVerticalAlignment('middle');
+  
+  cell = sheet.getRange(headerSubRangeMerged);
   cell.mergeVertically();
   cell.setVerticalAlignment('middle');
   
@@ -253,6 +295,55 @@ function formatOutput() {
 
   cell = sheet.getRange('I4:I28');
   cell.clearContent();
+  
+  cell = sheet.getRange('O4:O28');
+  cell.clearContent();
+  
+  // Role Labels
+  cell = sheet.getRange('I4:I8');
+  cell.mergeVertically();
+  cell.setValue('Top');
+  cell.setFontSize(11);
+  cell.setVerticalAlignment('middle');
+  cell.setBorder(true,true,true,true,true,true);
+  cell.setFontWeight('bold');
+  cell.setHorizontalAlignment('center');
+  
+  cell = sheet.getRange('I10:I14');
+  cell.mergeVertically();
+  cell.setValue('Jungle');
+  cell.setFontSize(11);
+  cell.setVerticalAlignment('middle');
+  cell.setBorder(true,true,true,true,true,true);
+  cell.setFontWeight('bold');
+  cell.setHorizontalAlignment('center');
+  
+  cell = sheet.getRange('I16:I20');
+  cell.mergeVertically();
+  cell.setValue('Mid');
+  cell.setFontSize(11);
+  cell.setVerticalAlignment('middle');
+  cell.setBorder(true,true,true,true,true,true);
+  cell.setFontWeight('bold');
+  cell.setHorizontalAlignment('center');
+  
+  cell = sheet.getRange('I22:I26');
+  cell.mergeVertically();
+  cell.setValue('ADC');
+  cell.setFontSize(11);
+  cell.setVerticalAlignment('middle');
+  cell.setBorder(true,true,true,true,true,true);
+  cell.setFontWeight('bold');
+  cell.setHorizontalAlignment('center');
+  
+  cell = sheet.getRange('I28:I32');
+  cell.mergeVertically();
+  cell.setValue('Support');
+  cell.setFontSize(11);
+  cell.setVerticalAlignment('middle');
+  cell.setBorder(true,true,true,true,true,true);
+  cell.setFontWeight('bold');
+  cell.setHorizontalAlignment('center');
   
   sheet.autoResizeColumn(10);
   sheet.autoResizeColumn(11);
@@ -424,7 +515,7 @@ function analyzeMatches(matchIds, accountId, profile, accountInfo) {
     
     accountInfo['lastAnalyzedMatch'] = matchIds[i];
     
-    if((new Date().getTime() - startTime) >= 250000){
+    if((new Date().getTime() - startTime) >= 240000){
       saveAccountInfo(accountId, accountInfo);
       formatOutput();
       Logger.log('Execution time approaching limits, saving progress and terminating...');
@@ -443,7 +534,8 @@ function getMatchStats(matchId, accountId) {
   data = getDataFromUrl(url);
   
   for(var i = 0; i < data['participantIdentities'].length; i++) {
-    if(data['participantIdentities'][i]['player']['accountId'] == accountId) {
+    if(data['participantIdentities'][i]['player']['accountId'] == accountId || data['participantIdentities'][i]['player']['currentAccountId'] == accountId) {
+      //Logger.log('Found account in match data: ' + accountId);
       var partId = data['participantIdentities'][i]['participantId'];
       
       matchStats['kills'] = data['participants'][partId - 1]['stats']['kills'];
@@ -455,6 +547,7 @@ function getMatchStats(matchId, accountId) {
       return matchStats;
     }
   }
+  Logger.log('Unable to find account #' + accountId + ' in match# ' + matchId);
 }
 
 function getTop5Champs(topChamps, accountInfo) {
@@ -492,19 +585,30 @@ function getTop5Champs(topChamps, accountInfo) {
 function getMatchIds(accountId) {
   var data;
   var matchIds = [];
+  var beginIndex = 0;
+  var endIndex = 0;
+  var totalGames = 1;
   
-  url = 'https://na1.api.riotgames.com/lol/match/v3/matchlists/by-account/' + accountId + '?queue=420&season9&' + 'api_key=' + apiKey;
-  data = getDataFromUrl(url);
+  while(endIndex != totalGames) {
+    url = 'https://na1.api.riotgames.com/lol/match/v3/matchlists/by-account/' + accountId + '?queue=420&beginIndex=' + beginIndex + '&season=9&api_key=' + apiKey;
+    data = getDataFromUrl(url);
   
-  for(var i = 0; i < data['matches'].length; i++) {
-    matchIds.push(data['matches'][i]['gameId']);
+    for(var i = 0; i < data['matches'].length; i++) {
+      if(data['matches'][i]['platformId'] != 'NA1') continue;
+      matchIds.push(data['matches'][i]['gameId']);
+    }
+    beginIndex += 100;
+    endIndex = data['endIndex'];
+    totalGames = data['totalGames'];
   }
+  
   return matchIds;
 }
 
 function getRank(summonerName, accountInfo){
   var data, summonerId;
   var j = 0;
+  var unranked = false;
   var profile = {};
   
   if(accountInfo['summonerId']) summonerId = accountInfo['summonerId'];
@@ -518,24 +622,26 @@ function getRank(summonerName, accountInfo){
   url = 'https://na1.api.riotgames.com/lol/league/v3/leagues/by-summoner/' + summonerId + '?api_key=' + apiKey;
   data = getDataFromUrl(url);
   
-  if(data.length > 1){
-    for(j = 0; j < data.length; j++){
-      if(data[j]['queue'] == 'RANKED_SOLO_5x5'){
-        profile['tier'] = data[j]['tier'];
-        profile['name'] = summonerName;
-        break;
-      }
-    }
-  }
-  else{
-    profile['tier'] = 'N/A'
+  if(data[0]['queue'] == 'RANKED_FLEX_SR') {
+    profile['tier'] = 'Unranked';
     profile['name'] = summonerName;
+    unranked = true;
   }
   
-  for(var i = 0; i < data[j]['entries'].length; i++){
-    if(data[j]['entries'][i]['playerOrTeamId'] == summonerId){
-      profile['division'] = romanToDecimal(data[j]['entries'][i]['rank']);
-      profile['lp'] = data[j]['entries'][i]['leaguePoints'];
+  for(j = 0; j < data.length; j++){
+    if(data[j]['queue'] == 'RANKED_SOLO_5x5'){
+      profile['tier'] = data[j]['tier'];
+      profile['name'] = summonerName;
+      break;
+    }
+  }
+  
+  if(unranked == false) {
+    for(var i = 0; i < data[j]['entries'].length; i++){
+      if(data[j]['entries'][i]['playerOrTeamId'] == summonerId){
+        profile['division'] = romanToDecimal(data[j]['entries'][i]['rank']);
+        profile['lp'] = data[j]['entries'][i]['leaguePoints'];
+      }
     }
   }
   Logger.log('Rank retrieved.');
