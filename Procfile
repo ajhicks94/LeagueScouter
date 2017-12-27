@@ -1,0 +1,1 @@
+web: DEBUG=app nodemon start
