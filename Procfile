@@ -1,1 +1,1 @@
-web: DEBUG=app nodemon ./bin/www
+web: DEBUG=app nodemon start
