@@ -29,7 +29,8 @@ A script that lives in your Google Sheets Script Editor.
 
 # In Progress (development):
  Converting the script into a hosted webapp that allows the user all of the current functionality of the script, with **NONE** of the previous limitations/sloppiness:
- |Problem | Solution|
+
+|Problem | Solution|
 |:---:|:---:|
 |6-minute execution time limit | App will live in a heroku instance|
 |Storing API_KEY in script | API_KEY will be secure in server|
