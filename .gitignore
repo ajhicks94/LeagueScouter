@@ -1,0 +1,5 @@
+*
+!.gitignore
+!scouter.js
+!screenshots/
+!README.md
