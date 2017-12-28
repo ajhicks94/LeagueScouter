@@ -1,2 +1,0 @@
-Current    : A script that lives in your Google Sheets Script Editor. Scouts actual Solo Queue statistics of a team (five players) such as top 5 champions played this season, games played, win rate per champion, and K/D/A per champion.
-In_Progress: A hosted webapp that allows the user to enter a team's summoner names, and returns (at least) the same stats as above.
