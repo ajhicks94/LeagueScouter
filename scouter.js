@@ -55,44 +55,19 @@ var championColumn = 'K4:K32';
 var championSubColumn = 'Q4:Q14';
 
 function main() {
-  //Logger.log('Function executing: main()');
   var time;
   var roleArr = ['top','jungle','mid','adc','support','subOne','subTwo'];
   var z = 0;
-  deleteTriggers();
-  //ScriptApp.newTrigger('main').timeBased().everyMinutes(5).create();
   
-  //Logger.log('Function executing: setUp()');
   if(scouterExists == false) return;
-  //Logger.log('Function completed: setUp()');
   
   while(z < 7) {
     time = run(roleArr[z]);
     if(time != 0) return;
-    z += 1; 
+    z += 1;
   }
   
-  /*time = run('top');
-  if(time != 0) return;
-  time = run('jungle');
-  if(time != 0) return;
-  time = run('mid');
-  if(time != 0) return;
-  time = run('adc');
-  if(time != 0) return;
-  time = run('support');
-  if(time != 0) return
-  time = run('subOne');
-  if(time != 0) return;
-  time = run('subTwo');
-  if(time != 0) return;
-  */
-  //Logger.log('Function executing: formatOutput()');
   formatOutput();
-  //Logger.log('Function completed: formatOutput()');
-  deleteTriggers();
-  
-  //Logger.log('Function completed: main()');
 }
 
 function run(role) {
@@ -148,26 +123,20 @@ function run(role) {
     Logger.log('Account loaded: ' + accountId);
   }
   
-  //Logger.log('Function executing: getRank()');
   profile = getRank(summoner, accountInfo); // worst: 2, best: 1 fetch
+  
   if(profile['tier'] == 'Unranked') return 0;
-  //Logger.log('Function completed: getRank()');
-  //Logger.log('Function executing: getMatchIds()');
+
   matchIds = getMatchIds(accountId); // worst + best: 1 fetch
-  //Logger.log('Function completed: getMatchIds()');
-  //Logger.log('Function executing: analyzeMatches()');
+
   if(analyzeMatches(matchIds, accountId, profile, accountInfo) == 'Time\'s Up') {
     sheet = s.getSheetByName(sheetName);
     sheet.getRange(completeCell).setValue((Math.round(roundAtTwoPlaces((accountInfo['totalGames'] / matchIds.length) * 100))) + '% analyzed...');
     return 1;
   }// worst: number of matches in matchlist, best: 0
-  //Logger.log('Function completed: analyzeMatches()');
-  //Logger.log('Function executing: getTop5Champs()');
+
   getTop5Champs(topChamps, accountInfo); // 0 fetches
-  //Logger.log('Function completed: getTop5Champs()');
-  //Logger.log('Function executing: printStatsToSheet()');
   printStatsToSheet(accountId, topChamps, role, profile, accountInfo); // 0 fetches
-  //Logger.log('Function completed: printStatsToSheet()');
   
   return 0;
 }
@@ -749,13 +718,6 @@ function getAccountRange() {
 
 function getChampionName(id) {
   return champions[id];
-}
-
-function deleteTriggers() {
-  var allTriggers = ScriptApp.getProjectTriggers();
-  for(var i = 0; i < allTriggers.length; i++) {
-    ScriptApp.deleteTrigger(allTriggers[i]);
-  }
 }
 
 function getlastRow(column) {
