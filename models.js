@@ -14,22 +14,28 @@ const playerSchema = new mongoose.Schema({
     summoner_id: Number,
     summoner_name: String,
     games_played: Number,
+    newest_analyzed_match: Number,
+    oldest_analyzed_match: Number,
+    last_analyzed_match: Number,
+    terminate_match: Number,
     wins: Number,
     losses: Number,
     rank: {
         current: {
-            season: Number,
             tier: String,
-            division: Number
+            division: Number,
+            league_points: Number
         },
 
         // List of previous season ranks
         previous: [{
-
-            // Might need to change this structure depending on RIOT API
+            // NOTE: RIOT API Does not provide previous season data
+            //       Thus, we would have to store everyone's ranks on the
+            //       last day of the season
             season: Number,
             tier: String,
-            division: Number
+            division: Number,
+            league_points: Number
         }]
     },
     champions: [{

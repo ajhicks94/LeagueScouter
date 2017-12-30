@@ -1,14 +1,21 @@
 const express  = require('express');
 const mongoose = require('mongoose');
 const router   = express.Router();
+const Kayn = require('kayn').Kayn;
 
 // Define our models
 require('../models.js');
+
+// Import our helper functions
 const summonerExists = require('../helpers/helper.js').summonerExists;
-const test = require('../helpers/helper.js').test;
+const getRank = require('../helpers/helper.js').getRank;
+const getSoloQueueStats = require('../helpers/helper.js').getSoloQueueStats;
+const romanToDecimal = require('../helpers/helper.js').romanToDecimal;
 
 // Import Player model
 const Player = mongoose.model("Player");
+
+const kayn = Kayn(process.env.RIOT_API_KEY)();
 
 // GET home page.
 router.get('/', (req, res) => {
@@ -41,17 +48,32 @@ router.post("/scouter", async (req, res) => {
   // 1.
 
   try{
-    //const summoner = await Player.findOne({summoner_name: req.body.summoner_name});
+
     const summoner = await summonerExists(req.body.summoner_name);
-    const t = await test(req.body.summoner_name);
+    
     // If the summoner isn't in our DB yet
     if(!summoner){
 
-      // Start compiling data
-
-      // Get rank
-
+      // Get account_id and summoner_id
+      const player = await kayn.Summoner.by.name(req.body.summoner_name);
       
+      // Get rank data
+      const rank = await getSoloQueueStats(player.id);
+
+      const new_player = new Player({
+        account_id: player.accountId,
+        summoner_id: player.id,
+        summoner_name: req.body.summoner_name,
+        wins: rank.wins,
+        losses: rank.losses,
+        rank: {
+          current: {
+            tier: rank.tier,
+            division: rank.rank,
+            league_points: rank.leaguePoints
+          },
+        }
+      });
 
       // Get matchIds
 
@@ -60,21 +82,14 @@ router.post("/scouter", async (req, res) => {
       // Top 5 Champions
 
       // Create a new Player object
-      const new_player = new Player({
-        summoner_name: req.body.summoner_name,
-        rank: {
-          current: {
-            division: t.summonerLevel
-          }
-        }
-      });
+     
 
       // Save the new Player object to DB
       await new_player.save();
 
       res.render('index',{
-        title: 'New Player!',
-        body: 'new_player.rank.current.division = ' + new_player.rank.current.division
+        //title: 'New Player!',
+        body: 'New Player saved! = ' + new_player
         //body: "Added summoner to DB: " + new_player.summoner_name
       });
     }
@@ -91,24 +106,8 @@ router.post("/scouter", async (req, res) => {
   }
   catch (e) {
     console.log('ERROR: ' + e);
-    res.status(400).send('ERROR. See server log');
+    res.status(400).send('ERROR: ' + e);
   }
-  /*
-  let new_player = new Player({
-    summoner_name: req.body.summoner_name
-  });
-  */
-  // If save is successful, print message and redirect to index
-  /*new_player.save()
-    .then(item => {
-      res.render('index', {
-        title: 'Home',
-        body: "Successfully added " + new_player.summoner_name
-      });
-    })
-    .catch(err => {
-      res.status(400).send("unable to save to db");
-    });*/
 });
 
 router.get('/scouter', (req, res) => {

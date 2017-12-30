@@ -43,3 +43,7 @@ A script that lives in your Google Sheets Script Editor.
 ...and additional functionality for the user:
 * Export stats to Google Sheets
 * Register and save previous queries
+
+|Scrapped Ideas | Reason |
+|:---:|:---:|
+|Providing previous season ranks|Riot's API does not hold this data, so I would have to scrape it from op.gg or another site|
