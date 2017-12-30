@@ -113,9 +113,7 @@ function run(role) {
     completeCell = 'O10';
     summoner = summoners[6][0];
   }
-  //Logger.log('Function executing: getAccountId');
   accountId = getAccountId(summoner); // worst + best: 1 fetch
-  //Logger.log('Function completed: getAccountId');
   
   if(accountExists(accountId)){
     Logger.log('Loading account: ' + accountId);
