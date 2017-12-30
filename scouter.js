@@ -113,6 +113,7 @@ function run(role) {
     completeCell = 'O10';
     summoner = summoners[6][0];
   }
+  
   accountId = getAccountId(summoner); // worst + best: 1 fetch
   
   if(accountExists(accountId)){

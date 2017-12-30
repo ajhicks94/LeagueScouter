@@ -4,6 +4,8 @@ const router   = express.Router();
 
 // Define our models
 require('../models.js');
+const summonerExists = require('../helpers/helper.js').summonerExists;
+const test = require('../helpers/helper.js').test;
 
 // Import Player model
 const Player = mongoose.model("Player");
@@ -39,23 +41,48 @@ router.post("/scouter", async (req, res) => {
   // 1.
 
   try{
-    const summoner = await Player.findOne({summoner_name: req.body.summoner_name});
-
+    //const summoner = await Player.findOne({summoner_name: req.body.summoner_name});
+    const summoner = await summonerExists(req.body.summoner_name);
+    const t = await test(req.body.summoner_name);
+    // If the summoner isn't in our DB yet
     if(!summoner){
 
-      // Add the summoner to the db
-      const new_player = await new Player({
-        summoner_name: req.body.summoner_name
+      // Start compiling data
+
+      // Get rank
+
+      
+
+      // Get matchIds
+
+      // Analyze matches
+
+      // Top 5 Champions
+
+      // Create a new Player object
+      const new_player = new Player({
+        summoner_name: req.body.summoner_name,
+        rank: {
+          current: {
+            division: t.summonerLevel
+          }
+        }
       });
 
+      // Save the new Player object to DB
       await new_player.save();
 
       res.render('index',{
         title: 'New Player!',
-        body: "Added summoner to DB: " + new_player.summoner_name
+        body: 'new_player.rank.current.division = ' + new_player.rank.current.division
+        //body: "Added summoner to DB: " + new_player.summoner_name
       });
     }
     else{
+      // Check if our data is updated
+
+
+
       res.render('index', {
         title: 'Success!',
         body: "Found summoner in DB: " + summoner.summoner_name
@@ -63,7 +90,8 @@ router.post("/scouter", async (req, res) => {
     }
   }
   catch (e) {
-    res.status(400).send('error somewhere');
+    console.log('ERROR: ' + e);
+    res.status(400).send('ERROR. See server log');
   }
   /*
   let new_player = new Player({
