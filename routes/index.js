@@ -78,10 +78,10 @@ router.post("/scouter", async (req, res) => {
       await new_player.save();
 
       // Get matchIds
-      const matchlist = await buildMatchlist(new_player.accountID);
+      const matchlist = await buildMatchlist(new_player);
 
       // Analyze matches
-      const analyzed = await analyzeMatches(matchlist, new_player.accountID);
+      await analyzeMatches(matchlist, new_player.accountID);
 
       // Top 5 Champions
      
@@ -96,7 +96,9 @@ router.post("/scouter", async (req, res) => {
     else{
       // Check if our data is updated
 
+      const matchlist = await buildMatchlist(summoner);
 
+      await analyzeMatches(matchlist, summoner.accountID);
 
       res.render('index', {
         title: 'Success!',

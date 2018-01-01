@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Kayn = require('kayn').Kayn;
+mongoose.set('debug', true);
 require('../models.js');
 
 const kayn = Kayn(process.env.RIOT_API_KEY)();
@@ -21,14 +22,13 @@ exports.summonerExists = async name => {
 // having to wait
 
 exports.analyzeMatches = async (matchlist, accountID) => {
-    // Save after analyzing each match?
-    console.log("analyzing matches...");
+    console.log("Analyzing matches...");
+
     let i = 0;
     let cleanSlate = false;
 
     const summoner = await Player.findOne({accountID: accountID});
-    console.log("retrieved summoner from db: " + summoner.summoner_name);
-    console.log("summoner wins before analyzing: " + summoner.wins);
+    
     // If the summoner doesn't have any matches analyzed yet
     if(summoner.newest_analyzed_match == undefined){
         summoner.newest_analyzed_match = summoner.oldest_analyzed_match = summoner.last_analyzed_match = matchlist[0];
@@ -48,11 +48,11 @@ exports.analyzeMatches = async (matchlist, accountID) => {
             }
         }
     }
-    console.log("begin loop");
     for( i ; i < matchlist.length; i++ ) {
 
         if(matchlist[i] == summoner.terminate_match && cleanSlate == false) {
             summoner.terminate_match = summoner.newest_analyzed_match;
+            return summoner;
         }
         // Could use ternary operator here but it's already a bit verbose
         if(summoner.oldest_analyzed_match > matchlist[i]) {
@@ -65,36 +65,26 @@ exports.analyzeMatches = async (matchlist, accountID) => {
                                             {champions: {$elemMatch: {championID: champID}}});
         
         if(!cursor) {
-            // This means that the player doesn't have stats for this champion yet
-            // So we may need to do some stuff to initialize attributes to default values
-            // 0...etc. Possibly not though, since I have listed defaults in the model.
+
+            // Insert a new champion and maintain sort of decreasing #games_played (so we can pull top 5 champs easier)
+            // Or would it be more efficient to just query the 5 champs with highest games_played?
             await Player.update(
-                {
-                    'accountID': accountID
-                },
-                {
-                    '$push': {
-                        'champions': {
-                            'championID': matchStats.championID
-                        }
-                    }
-                }
-            )
+                { 'accountID': accountID },
+                { '$push': { 'champions': { '$each': [{ 'championID': matchStats.championID }],
+                                            '$sort': { 'games_played': -1 }}}});
         }
 
-        // Increment number of wins/losses
+        // Increment stats (we could do two updates for massively improved readability, are updates heavy on mongo?)
         if(matchStats.outcome == true) {
             await Player.update(
-                {
-                    'accountID': accountID,
+                {   'accountID': accountID,
                     'champions': {
                         '$elemMatch': {
                             'championID': matchStats.championID
                         }
                     }
                 },
-                {
-                    '$inc': {
+                {   '$inc': {
                         'champions.$.kills': matchStats.kills,
                         'champions.$.deaths': matchStats.deaths,
                         'champions.$.assists': matchStats.assists,
@@ -103,33 +93,20 @@ exports.analyzeMatches = async (matchlist, accountID) => {
                         'games_played': 1,
                         'wins': 1,
                         'last_analyzed_match': matchlist[i],
-                    },
-                    /*
-                    '$set': {
-                        'champions.$.championID': 999999
-                    }*/
-                }
-                /*{
-                    'arrayFilters': {
-                        'index.championID': 39
                     }
-                }*/
-            );
-            //summoner.wins++;
+                });
         }
         else if(matchStats.outcome == false) {
 
             await Player.update(
-                {
-                    'accountID': accountID,
+                {   'accountID': accountID,
                     'champions': {
                         '$elemMatch': {
                             'championID': matchStats.championID
                         }
                     }
                 },
-                {
-                    '$inc': {
+                {   '$inc': {
                         'champions.$.kills': matchStats.kills,
                         'champions.$.deaths': matchStats.deaths,
                         'champions.$.assists': matchStats.assists,
@@ -138,42 +115,34 @@ exports.analyzeMatches = async (matchlist, accountID) => {
                         'games_played': 1,
                         'losses': 1,
                         'last_analyzed_match': matchlist[i],
-                    },
-                    /*
-                    '$set': {
-                        'champions.$.championID': 999999
-                    }*/
-                }
-                /*{
-                    'arrayFilters': {
-                        'index.championID': 39
                     }
-                }*/
-            );
+                });
         }
 
         await summoner.save();
     }
 
     summoner.terminate_match = summoner.newest_analyzed_match;
-    summoner.save();
+    await summoner.save();
 
     return summoner;
     // Once again, should we save after analyzing each match??
 }
 
-exports.buildMatchlist = async accountID => {
+exports.buildMatchlist = async summoner => {
     let beginIndex = 0;
     let endIndex = 0;
     let totalGames = 1;
     let matchlist = [];
 
     while(endIndex != totalGames){
-        const partial_matchlist = await kayn.Matchlist.by.accountID(accountID)
+        const partial_matchlist = await kayn.Matchlist.by.accountID(summoner.accountID)
                                                          .query({ queue: 420,
                                                                   season: 9,
                                                                   beginIndex: beginIndex});
-
+        if(partial_matchlist.matches[0].gameId == summoner.terminate_match) {
+            return 0;
+        }
         partial_matchlist.matches.forEach(element => {
             matchlist.push(element.gameId);
         });
