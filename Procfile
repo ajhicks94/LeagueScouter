@@ -1,1 +1,1 @@
-web: DEBUG=app nodemon start
+web: DEBUG=kayn:* nodemon start

@@ -1,7 +1,7 @@
 const express  = require('express');
 const mongoose = require('mongoose');
 const router   = express.Router();
-const Kayn = require('kayn').Kayn;
+//const Kayn = require('kayn').Kayn;
 
 // Define our models
 require('../models.js');
@@ -9,13 +9,15 @@ require('../models.js');
 // Import our helper functions
 const summonerExists = require('../helpers/helper.js').summonerExists;
 const getRank = require('../helpers/helper.js').getRank;
+const buildMatchlist = require('../helpers/helper.js').buildMatchlist;
+const analyzeMatches = require('../helpers/helper.js').analyzeMatches;
 const getSoloQueueStats = require('../helpers/helper.js').getSoloQueueStats;
 const romanToDecimal = require('../helpers/helper.js').romanToDecimal;
 
 // Import Player model
 const Player = mongoose.model("Player");
 
-const kayn = Kayn(process.env.RIOT_API_KEY)();
+const kayn = require('../helpers/helper.js').kayn;
 
 // GET home page.
 router.get('/', (req, res) => {
@@ -49,48 +51,46 @@ router.post("/scouter", async (req, res) => {
 
   try{
 
+    const player = await kayn.Summoner.by.name(req.body.summoner_name);
+    const rank = await getSoloQueueStats(player.id);
     const summoner = await summonerExists(req.body.summoner_name);
-    
+
     // If the summoner isn't in our DB yet
     if(!summoner){
-
-      // Get account_id and summoner_id
-      const player = await kayn.Summoner.by.name(req.body.summoner_name);
+      // Get accountID and summonerID
       
       // Get rank data
-      const rank = await getSoloQueueStats(player.id);
 
+      // Construct the new Player object
       const new_player = new Player({
-        account_id: player.accountId,
-        summoner_id: player.id,
+        accountID: player.accountId,
+        summonerID: player.id,
         summoner_name: req.body.summoner_name,
-        wins: rank.wins,
-        losses: rank.losses,
         rank: {
           current: {
             tier: rank.tier,
             division: rank.rank,
             league_points: rank.leaguePoints
           },
-        }
+        },
       });
-
-      // Get matchIds
-
-      // Analyze matches
-
-      // Top 5 Champions
-
-      // Create a new Player object
-     
-
       // Save the new Player object to DB
       await new_player.save();
 
+      // Get matchIds
+      const matchlist = await buildMatchlist(new_player.accountID);
+
+      // Analyze matches
+      const analyzed = await analyzeMatches(matchlist, new_player.accountID);
+
+      // Top 5 Champions
+     
+      
+      
+
       res.render('index',{
         //title: 'New Player!',
-        body: 'New Player saved! = ' + new_player
-        //body: "Added summoner to DB: " + new_player.summoner_name
+        body: 'New Player saved: ' + new_player.summoner_name
       });
     }
     else{

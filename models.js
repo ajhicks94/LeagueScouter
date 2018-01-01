@@ -10,16 +10,25 @@ const teamSchema = new mongoose.Schema({
   });
 
 const playerSchema = new mongoose.Schema({
-    account_id: Number,
-    summoner_id: Number,
+    accountID: Number,
+    summonerID: Number,
     summoner_name: String,
-    games_played: Number,
+    games_played: {
+        type: Number,
+        default: 0
+    },
     newest_analyzed_match: Number,
     oldest_analyzed_match: Number,
     last_analyzed_match: Number,
     terminate_match: Number,
-    wins: Number,
-    losses: Number,
+    wins: {
+        type: Number,
+        default: 0
+    },
+    losses: {
+        type: Number,
+        default: 0
+    },
     rank: {
         current: {
             tier: String,
@@ -39,18 +48,35 @@ const playerSchema = new mongoose.Schema({
         }]
     },
     champions: [{
-        champion_id: Number,
+        championID: Number,
         champion_name: String,
-        wins: Number,
-        losses: Number,
-        games_played: Number,
-        kills: Number,
-        deaths: Number,
-        assists: Number,
-
+        wins: {
+            type: Number,
+            default: 0
+        },
+        losses: {
+            type: Number,
+            default: 0
+        },
+        games_played: {
+            type: Number,
+            default: 0
+        },
+        kills: {
+            type: Number,
+            default: 0
+        },
+        deaths: {
+            type: Number,
+            default: 0
+        },
+        assists: {
+            type: Number,
+            default: 0
+        },
         // List of champions played vs
         matchups: [{
-            champion_id: Number,
+            championID: Number,
             champion_name: String,
             wins: Number,
             losses: Number,
@@ -58,7 +84,7 @@ const playerSchema = new mongoose.Schema({
 
             // List of keystones used
             keystones: [{
-                keystone_id: Number,
+                keystoneID: Number,
                 keystone_name: String,
                 wins: Number,
                 losses: Number,
@@ -66,7 +92,7 @@ const playerSchema = new mongoose.Schema({
 
                 // List of keystones played vs
                 vs_keystones: [{
-                    keystone_id: Number,
+                    keystoneID: Number,
                     keystone_name: String,
                     wins: Number,
                     losses: Number,
