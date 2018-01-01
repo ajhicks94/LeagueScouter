@@ -11,6 +11,7 @@ const summonerExists = require('../helpers/helper.js').summonerExists;
 const getRank = require('../helpers/helper.js').getRank;
 const buildMatchlist = require('../helpers/helper.js').buildMatchlist;
 const analyzeMatches = require('../helpers/helper.js').analyzeMatches;
+const getTop5Champs = require('../helpers/helper.js').getTop5Champs;
 const getSoloQueueStats = require('../helpers/helper.js').getSoloQueueStats;
 const romanToDecimal = require('../helpers/helper.js').romanToDecimal;
 
@@ -85,7 +86,7 @@ router.post("/scouter", async (req, res) => {
 
       // Top 5 Champions
      
-      
+      await getTop5Champs(new_player.accountID);
       
 
       res.render('index',{
@@ -100,9 +101,16 @@ router.post("/scouter", async (req, res) => {
 
       await analyzeMatches(matchlist, summoner.accountID);
 
+      const top5Champs = await getTop5Champs(summoner.accountID);
+
       res.render('index', {
         title: 'Success!',
-        body: "Found summoner in DB: " + summoner.summoner_name
+        //body: "Found summoner in DB: " + summoner.summoner_name,
+        champ1: top5Champs[0].championID,
+        champ2: top5Champs[1].championID,
+        champ3: top5Champs[2].championID,
+        champ4: top5Champs[3].championID,
+        champ5: top5Champs[4].championID
       });
     }
   }

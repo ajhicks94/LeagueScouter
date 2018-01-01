@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const Kayn = require('kayn').Kayn;
-mongoose.set('debug', true);
+const util = require('util');
+
+//mongoose.set('debug', true);
 require('../models.js');
 
 const kayn = Kayn(process.env.RIOT_API_KEY)();
@@ -20,6 +22,12 @@ exports.summonerExists = async name => {
 // I guess the problem with that is, with a development key,
 // we won't be able to finish analyzing a whole summoner without
 // having to wait
+
+exports.getTop5Champs = async accountID => {
+    topChamps = await Player.find({accountID: accountID }, 
+                            { champions: { $slice: 5 } });
+    return topChamps[0].champions;
+}
 
 exports.analyzeMatches = async (matchlist, accountID) => {
     console.log("Analyzing matches...");
