@@ -8,6 +8,7 @@ require('../models.js');
 
 // Import our helper functions
 const summonerExists = require('../helpers/helper.js').summonerExists;
+const getChampName = require('../helpers/helper').getChampName;
 const getRank = require('../helpers/helper.js').getRank;
 const buildMatchlist = require('../helpers/helper.js').buildMatchlist;
 const analyzeMatches = require('../helpers/helper.js').analyzeMatches;
@@ -103,10 +104,17 @@ router.post("/scouter", async (req, res) => {
 
       const top5Champs = await getTop5Champs(summoner.accountID);
 
+      //for(let i = 0; i < top5Champs.length; i++) {
+        //top5Champs[i].championName = await getChampName(top5Champs[i].championID);
+      //}
+      console.log('top5Champs= ' + JSON.stringify(top5Champs, null, 4));
+      console.log('top5Champs.length= ' + top5Champs.length);
+      const ori = await kayn.Static.Champion.get(top5Champs[4].championID);
+      console.log('???= ' + ori.name);
       res.render('index', {
         title: 'Success!',
         //body: "Found summoner in DB: " + summoner.summoner_name,
-        champ1: top5Champs[0].championID,
+        champ1: top5Champs[0].championName,
         champ2: top5Champs[1].championID,
         champ3: top5Champs[2].championID,
         champ4: top5Champs[3].championID,

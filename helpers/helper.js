@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const Kayn = require('kayn').Kayn;
-const util = require('util');
 
 //mongoose.set('debug', true);
 require('../models.js');
@@ -22,6 +21,12 @@ exports.summonerExists = async name => {
 // I guess the problem with that is, with a development key,
 // we won't be able to finish analyzing a whole summoner without
 // having to wait
+
+exports.getChampName = async champID => {
+    const champion = await kayn.Static.Champion.get(champID);
+
+    return champion.name;
+}
 
 exports.getTop5Champs = async accountID => {
     topChamps = await Player.find({accountID: accountID }, 
