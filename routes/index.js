@@ -1,10 +1,12 @@
 const express  = require('express');
 const mongoose = require('mongoose');
 const router   = express.Router();
-//const Kayn = require('kayn').Kayn;
 
 // Define our models
 require('../models.js');
+
+// Get champion JSON object
+//const champions = require('../champions.json');
 
 // Import our helper functions
 const summonerExists = require('../helpers/helper.js').summonerExists;
@@ -19,6 +21,7 @@ const romanToDecimal = require('../helpers/helper.js').romanToDecimal;
 // Import Player model
 const Player = mongoose.model("Player");
 
+// Import kayn and REGIONS
 const kayn = require('../helpers/helper.js').kayn;
 const REGIONS = require('../helpers/helper.js').REGIONS;
 
@@ -32,39 +35,37 @@ router.get('/', (req, res) => {
 });
 
 router.post("/scouter", async (req, res) => {
-  
-  /*
-  Do some processing to obtain all data needed
-  in order to populate a new Player object
+
+  /* For all inputted summoners:
+    * Input = summoner_name
+    * 1. Check to see if our stats are up to date
+    *  a. If so, send stats
+    *  b. If not, update stats
+    * 2. Update stats
+    *  a. Loop through all unanalyzed matches and analyze them
+    * 3. Send stats
+
+    * 1. Check to see if our stats are up to datee
+    *  a. Case 1: We don't have this player in the DB
+    *  b. Case 2: We have the player, but are stats are incomplete
+    *  c. Case 3: We have the player and our stats are complete
   */
 
-  // For all inputted summoners:
-  // Input = summoner_name
-  // 1. Check to see if our stats are up to date
-  //  a. If so, send stats
-  //  b. If not, update stats
-  // 2. Update stats
-  //  a. Loop through all unanalyzed matches and analyze them
-  // 3. Send stats
-
-  // 1. Check to see if our stats are up to datee
-  //  a. Case 1: We don't have this player in the DB
-  //  b. Case 2: We have the player, but are stats are incomplete
-  //  c. Case 3: We have the player and our stats are complete
-
-  // 1.
-
   try{
-    //console.log('body= ' + JSON.stringify(req.body));
+    // Need to cache this permanently
+    //const champions = await kayn.Static.Champion.list().query({dataById: true});
+    console.log('champions= ' + JSON.stringify(champions, null, 4));
+    // Get accountID and summonerID
     const player = await kayn.Summoner.by.name(req.body.summoner_name).region(req.body.region);
+
+    // Get current rank data
     const rank = await getSoloQueueStats(player.id);
+
+    // Check if the summoner exists in our DB already
     const summoner = await summonerExists(req.body.summoner_name);
     
-    // If the summoner isn't in our DB yet
+    // Case 1: Player is not in our DB
     if(!summoner){
-      // Get accountID and summonerID
-      
-      // Get rank data
 
       // Construct the new Player object
       const new_player = new Player({
@@ -80,18 +81,21 @@ router.post("/scouter", async (req, res) => {
           },
         },
       });
+
       // Save the new Player object to DB
       await new_player.save();
 
-      // Get matchIds
+      // TODO: We can make lines 84-91 a function so we do not repeat code in the if-else
+      //       get matchlist, analyze matches, get top5
+
+      // Construct matchlist
       const matchlist = await buildMatchlist(new_player);
 
-      // Analyze matches
+      // Analyze match stats
       await analyzeMatches(matchlist, new_player.accountID);
 
-      // Top 5 Champions
-     
-      await getTop5Champs(new_player.accountID);
+      // Get player's 5 most-played champions
+      const top5 = await getTop5Champs(new_player.accountID);
       
 
       res.render('index',{
@@ -99,6 +103,7 @@ router.post("/scouter", async (req, res) => {
         body: 'New Player saved: ' + new_player.summoner_name
       });
     }
+    // Case 2/3: Player is in our DB
     else{
       // Check if our data is updated
 
@@ -108,21 +113,20 @@ router.post("/scouter", async (req, res) => {
 
       const top5Champs = await getTop5Champs(summoner.accountID);
 
-      //for(let i = 0; i < top5Champs.length; i++) {
-        //top5Champs[i].championName = await getChampName(top5Champs[i].championID);
-      //}
-      console.log('top5Champs= ' + JSON.stringify(top5Champs, null, 4));
-      console.log('top5Champs.length= ' + top5Champs.length);
-      const ori = await kayn.Static.Champion.get(top5Champs[4].championID);
-      console.log('???= ' + ori.name);
+      // Can only make 10 requests to the static endpoint per HOUR, need to store and cache champID->champName
+
+      // Since champions live in the player model, we should just populate the .champion_name attribute whenever 
+      // we first add a new champion to that player's list by looking in the full champion list by ID, rather than
+      // looking in the full champion list every single time we need to output the name.
+
       res.render('index', {
-        title: 'Success!',
-        //body: "Found summoner in DB: " + summoner.summoner_name,
-        champ1: top5Champs[0].championName,
-        champ2: top5Champs[1].championID,
-        champ3: top5Champs[2].championID,
-        champ4: top5Champs[3].championID,
-        champ5: top5Champs[4].championID
+        //title: 'Found summoner in DB!',
+        body: "Found summoner in DB: " + summoner.summoner_name,
+        champ1: champions.data[top5Champs[0].championID].name,
+        champ2: champions.data[top5Champs[1].championID].name,
+        champ3: champions.data[top5Champs[2].championID].name,
+        champ4: champions.data[top5Champs[3].championID].name,
+        champ5: champions.data[top5Champs[4].championID].name
       });
     }
   }

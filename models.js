@@ -1,5 +1,10 @@
 const mongoose = require('mongoose');
 
+const championSchema = new mongoose.Schema({
+    id: Number,
+    name: String
+});
+
 const teamSchema = new mongoose.Schema({
     name: String,
     p1: String,
@@ -104,5 +109,6 @@ const playerSchema = new mongoose.Schema({
     }]
 })
 
+mongoose.model("Champion", championSchema);
 mongoose.model("Team", teamSchema);
 mongoose.model("Player", playerSchema);

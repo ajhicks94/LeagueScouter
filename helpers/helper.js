@@ -7,6 +7,17 @@ require('../models.js');
 
 const kayn = Kayn(process.env.RIOT_API_KEY)();
 const Player = mongoose.model('Player');
+const fs = require('fs');
+
+const fn = async () => {
+    const champions = await kayn.Static.Champion.list().query({dataById: true})
+    fs.writeFile('champions.json', JSON.stringify(champions), (err) => {
+        if (err) throw err;
+        console.log('It\'s saved!');
+    });
+}
+
+fn();
 
 exports.kayn = kayn;
 exports.REGIONS = REGIONS;
