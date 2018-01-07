@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Kayn = require('kayn').Kayn;
+const REGIONS = require('kayn').REGIONS;
 
 //mongoose.set('debug', true);
 require('../models.js');
@@ -8,6 +9,7 @@ const kayn = Kayn(process.env.RIOT_API_KEY)();
 const Player = mongoose.model('Player');
 
 exports.kayn = kayn;
+exports.REGIONS = REGIONS;
 
 exports.summonerExists = async name => {
     const summoner = await Player.findOne({summoner_name: name});

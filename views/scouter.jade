@@ -4,8 +4,10 @@ block content
     h1= "Enter your team"
     form(action="/scouter", method="post")
         label(for="Enter")
-        // input(type="text", name="name" placeholder="Enter team name")
-        br
+            p Please select a region: 
+                select(name="region")
+                    each region in regions
+                        option(selected=(region == "na" ? region : null)) #{region}
         input(type="text", name="summoner_name" placeholder="Enter summoner name")
         br
         input#Enter(type="text", name="p2" placeholder="Enter summoner name")

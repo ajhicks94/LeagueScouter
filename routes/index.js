@@ -20,9 +20,11 @@ const romanToDecimal = require('../helpers/helper.js').romanToDecimal;
 const Player = mongoose.model("Player");
 
 const kayn = require('../helpers/helper.js').kayn;
+const REGIONS = require('../helpers/helper.js').REGIONS;
 
 // GET home page.
 router.get('/', (req, res) => {
+  console.log('REGIONS= ' + JSON.stringify(REGIONS));
   res.render('index', { 
     title: 'Home',
     body: 'Welcome to lolscouter.com!'
@@ -30,6 +32,7 @@ router.get('/', (req, res) => {
 });
 
 router.post("/scouter", async (req, res) => {
+  
   /*
   Do some processing to obtain all data needed
   in order to populate a new Player object
@@ -52,11 +55,11 @@ router.post("/scouter", async (req, res) => {
   // 1.
 
   try{
-
-    const player = await kayn.Summoner.by.name(req.body.summoner_name);
+    //console.log('body= ' + JSON.stringify(req.body));
+    const player = await kayn.Summoner.by.name(req.body.summoner_name).region(req.body.region);
     const rank = await getSoloQueueStats(player.id);
     const summoner = await summonerExists(req.body.summoner_name);
-
+    
     // If the summoner isn't in our DB yet
     if(!summoner){
       // Get accountID and summonerID
@@ -65,6 +68,7 @@ router.post("/scouter", async (req, res) => {
 
       // Construct the new Player object
       const new_player = new Player({
+        region: req.body.region,
         accountID: player.accountId,
         summonerID: player.id,
         summoner_name: req.body.summoner_name,
@@ -130,7 +134,8 @@ router.post("/scouter", async (req, res) => {
 
 router.get('/scouter', (req, res) => {
   res.render('scouter', {
-    title: 'Scouter'
+    title: 'Scouter',
+    regions: REGIONS,
   })
 })
 

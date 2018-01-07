@@ -10,6 +10,7 @@ const teamSchema = new mongoose.Schema({
   });
 
 const playerSchema = new mongoose.Schema({
+    region: String,
     accountID: Number,
     summonerID: Number,
     summoner_name: String,
