@@ -5,8 +5,8 @@ const logger = require('morgan');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 
-const index = require('./routes/index');
-const users = require('./routes/users');
+const index = require('./controllers/index');
+const users = require('./controllers/users');
 
 const app = express();
 

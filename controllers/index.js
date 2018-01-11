@@ -3,10 +3,10 @@ const mongoose = require('mongoose');
 const router   = express.Router();
 
 // Define our models
-require('../models.js');
+require('../models/models.js');
 
 // Get champion JSON object
-//const champions = require('../champions.json');
+const champions = require('../public/champions.json');
 
 // Import our helper functions
 const summonerExists = require('../helpers/helper.js').summonerExists;
@@ -55,6 +55,7 @@ router.post("/scouter", async (req, res) => {
     // Need to cache this permanently
     //const champions = await kayn.Static.Champion.list().query({dataById: true});
     console.log('champions= ' + JSON.stringify(champions, null, 4));
+
     // Get accountID and summonerID
     const player = await kayn.Summoner.by.name(req.body.summoner_name).region(req.body.region);
 
@@ -100,7 +101,12 @@ router.post("/scouter", async (req, res) => {
 
       res.render('index',{
         //title: 'New Player!',
-        body: 'New Player saved: ' + new_player.summoner_name
+        body: 'New Player saved: ' + new_player.summoner_name,
+        champ1: champions.data[top5Champs[0].championID].name,
+        champ2: champions.data[top5Champs[1].championID].name,
+        champ3: champions.data[top5Champs[2].championID].name,
+        champ4: champions.data[top5Champs[3].championID].name,
+        champ5: champions.data[top5Champs[4].championID].name
       });
     }
     // Case 2/3: Player is in our DB
